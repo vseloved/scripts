@@ -1,0 +1,18 @@
+(require 'asdf)
+(push "/home/vs/prj/lisp/nuts/" asdf:*central-registry*)
+(push "/home/vs/prj/lisp/rutils/" asdf:*central-registry*)
+(push "/home/vs/.lisp/" asdf:*central-registry*)
+(push "/home/vs/lib/lisp/cl-vectors-0.1.4a/" asdf:*central-registry*)
+(push "/home/vs/lib/lisp/iolib-0.6.0/" asdf:*central-registry*)
+(require 'nuts)
+(pushnew :vseloved *features*)
+(rutils.usr:enable-literal-syntax :sharp-backq)
+;; (rutils.usr:enable-literal-syntax :hash-table)
+
+;;; The following lines added by ql:add-to-init-file:
+#-quicklisp
+(let ((quicklisp-init (merge-pathnames "quicklisp/setup.lisp"
+                                       (user-homedir-pathname))))
+  (when (probe-file quicklisp-init)
+    (load quicklisp-init)))
+
