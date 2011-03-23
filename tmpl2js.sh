@@ -10,6 +10,6 @@ else
     OUT=$2
 fi;
 
-echo -n "var $NAMETemplate = '" > $OUT;
+echo -n "var ${NAME}Template = '" > $OUT;
 tr -d "\r\n" < $1 | sed -e "s/'/\\\'/g"  >> $OUT;
 echo "';" >> $OUT;

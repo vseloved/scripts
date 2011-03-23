@@ -69,13 +69,14 @@
 ;; whitespace
 
 (autoload 'whitespace-mode "whitespace" "Toggle whitespace visualization." t)
-(setq whitespace-line-column 80)
-(setq whitespace-style '(tabs tab-mark lines))
-;; (setq whitespace-global-modes '(lisp-mode python-mode))
+(setq whitespace-line-column 100)
+(setq whitespace-style '(tabs tab-mark lines-tail))
+(setq whitespace-global-modes '(lisp-mode python-mode clojure-mode js-mode))
 (add-hook 'write-file-hooks 'delete-trailing-whitespace)
 (add-hook 'lisp-mode-hook 'whitespace-mode)
 (add-hook 'python-mode-hook 'whitespace-mode)
 (add-hook 'clojure-mode-hook 'whitespace-mode)
+(add-hook 'js-mode-hook 'whitespace-mode)
 
 ;; tabs
 
@@ -177,7 +178,7 @@
 
 (global-set-key [f5] 'slime)
 (global-set-key [(C f5)] 'slime-restart-inferior-lisp)
-(global-set-key [(C f6)] 'slime-connect)
+(global-set-key [(C .)] 'slime-connect)
 (global-set-key (kbd "C-x v") 'slime-selector)
 (global-set-key [f6] 'linum-mode)
 (global-set-key [f7] 'py-shell)
@@ -207,25 +208,6 @@
 (add-hook 'shell-mode-hook 'ansi-color-for-comint-mode-on)
 (setenv "EDITOR" "emacsclient")
 (setenv "VISUAL" "emacsclient")
-
-
-;; slime
-
-(setq inferior-lisp-program "/usr/bin/sbcl")
-(add-to-list 'load-path "~/bin/slime-2009-12-10")
-(require 'slime-autoloads)
-(slime-setup '(slime-scratch slime-editing-commands slime-asdf slime-fuzzy slime-repl))
-(setq slime-net-coding-system 'utf-8-unix)
-(add-to-list 'minor-mode-alist
-             '(slime-fuzzy-target-buffer-completions-mode
-               " Fuzzy Target Buffer Completions"))
-(defun slime-keys ()
-  (local-set-key [f1] '(lambda ()
-                         (interactive)
-                         (info (concatenate 'string "(gcl) " (thing-at-point 'symbol)))))
-  (local-set-key [tab] 'slime-indent-and-complete-symbol)
-  (local-set-key [(C t)] 'transpose-sexps))
-(add-hook 'slime-mode-hook 'slime-keys)
 
 
 ;; autocompletion
@@ -333,3 +315,94 @@
 
 (require 'clojure-mode)
 (add-to-list 'auto-mode-alist '("\\.clj\\'" . clojure-mode))
+(add-hook 'clojure-mode-hook
+          (lambda ()
+            (local-set-key [(C t)] 'transpose-sexps)))
+
+;; slime
+
+(setq inferior-lisp-program "/usr/bin/sbcl")
+(add-to-list 'load-path "~/bin/slime-2009-12-10")
+(require 'slime-autoloads)
+
+(slime-setup '(slime-scratch slime-editing-commands slime-asdf slime-fuzzy slime-repl))
+
+(setq slime-net-coding-system 'utf-8-unix)
+(add-to-list 'minor-mode-alist
+             '(slime-fuzzy-target-buffer-completions-mode
+               " Fuzzy Target Buffer Completions"))
+
+(defun slime-keys ()
+  (local-set-key [f1] '(lambda ()
+                         (interactive)
+                         (info (concatenate 'string "(gcl) " (thing-at-point 'symbol)))))
+  (local-set-key [tab] 'slime-indent-and-complete-symbol)
+  (local-set-key [(C t)] 'transpose-sexps))
+(add-hook 'slime-mode-hook 'slime-keys)
+
+(add-hook 'slime-mode-hook
+          (lambda ()
+            (setq slime-truncate-lines nil)
+            (slime-redirect-inferior-output)))
+
+(require 'swank-clojure)
+
+(setq slime-lisp-implementations
+      '((sbcl ("sbcl" "--sbcl-nolineedit"))
+        (ecl ("ecl"))
+        (ccl ("ccl"))
+        (ccl64 ("ccl64"))
+        (clojure ("lein swank") :init swank-clojure-init)))
+
+(defmacro defslime-start (name mapping)
+  `(defun ,name ()
+     (interactive)
+     (let ((slime-default-lisp ,mapping))
+       (slime))))
+
+(defslime-start ccl 'ccl)
+(defslime-start ccl64 'ccl64)
+(defslime-start clojure 'clojure)
+(defslime-start ecl 'ecl)
+(defslime-start sbcl 'sbcl)
+
+
+;; fw/bw
+
+(defun fw ()
+  (interactive)
+  (if (= (following-char) ?\n)
+      (progn (forward-char)
+             (skip-chars-forward "[:blank:]"))
+    (let ((skipped (skip-chars-forward "[:alnum:]") ))
+      (when (= skipped 0)
+        (skip-chars-forward "[:punct:]")
+        (skip-chars-forward "[:blank:]")))))
+
+(defun bw ()
+  (interactive)
+  (if (= (preceding-char) ?\n)
+      (progn (backward-char)
+             (skip-chars-backward "[:blank:]"))
+    (flet ((skip-alnum-or-punct-backward ()
+             (let ((alnum-skipped (skip-chars-backward "[:alnum:]")))
+               (if (= alnum-skipped 0)
+                   (skip-chars-backward "[:punct:]")
+                   alnum-skipped))))
+      (when (= 0 (skip-alnum-or-punct-backward))
+        (skip-chars-backward "[:blank:]")
+        (skip-alnum-or-punct-backward)))))
+
+(defun fw-kill-word ()
+  (interactive)
+  (kill-region (point) (progn (fw) (point))))
+
+(defun bw-kill-word ()
+  (interactive)
+  (kill-region (point) (progn (bw) (point))))
+
+(global-set-key [C-left] 'bw)
+(global-set-key [C-right] 'fw)
+(global-set-key [C-backspace] 'bw-kill-word)
+(global-set-key [C-delete] 'fw-kill-word)
+
