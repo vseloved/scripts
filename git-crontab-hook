@@ -1,0 +1,10 @@
+#!/bin/sh
+
+GIT_DIR=/var/git/repositories/grammarly.git/
+GIT_BASE=/var/git/checkout
+
+(
+        cd "$GIT_DIR"
+        git push "$GIT_BASE/grammarly"
+)
+
