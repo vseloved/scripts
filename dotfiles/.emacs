@@ -1,3 +1,5 @@
+(add-to-list 'load-path "~/.emacs.d/addons/")
+
 ;; vars
 
 (defvar home-dir (concat (expand-file-name "~") "/"))
@@ -48,6 +50,10 @@
 (setq-default Info-default-directory-list
               (cons "/home/vs/lib/hyperspec/info/"
                     Info-default-directory-list))
+(defun clhs-info ()
+  (interactive)
+  (ignore-errors
+    (info (concatenate 'string "(gcl) " (thing-at-point 'symbol)))))
 
 
 ;; python
@@ -65,18 +71,6 @@
 
 (add-to-list 'auto-mode-alist '("\\.py\\'" . python-mode))
 
-
-;; whitespace
-
-(autoload 'whitespace-mode "whitespace" "Toggle whitespace visualization." t)
-(setq whitespace-line-column 100)
-(setq whitespace-style '(tabs tab-mark lines-tail))
-(setq whitespace-global-modes '(lisp-mode python-mode clojure-mode js-mode))
-(add-hook 'write-file-hooks 'delete-trailing-whitespace)
-(add-hook 'lisp-mode-hook 'whitespace-mode)
-(add-hook 'python-mode-hook 'whitespace-mode)
-(add-hook 'clojure-mode-hook 'whitespace-mode)
-(add-hook 'js-mode-hook 'whitespace-mode)
 
 ;; tabs
 
@@ -136,19 +130,19 @@
      (font-lock-comment-face ((t (:foreground "#888a85"))))
      (font-lock-constant-face ((t (:foreground "#8ae234"))))
      (font-lock-doc-face ((t (:foreground "#888a85"))))
-     (font-lock-keyword-face ((t (:foreground "#729fcf" :bold t))))
+     (font-lock-keyword-face ((t (:foreground "#729fcf" :bold nil))))
      (font-lock-string-face ((t (:foreground "#ad7fa8" :italic t))))
-     (font-lock-type-face ((t (:foreground "#8ae234" :bold t))))
+     (font-lock-type-face ((t (:foreground "#8ae234" :bold nil))))
      (font-lock-variable-name-face ((t (:foreground "#eeeeec"))))
-     (font-lock-warning-face ((t (:bold t :foreground "#f57900"))))
-     (font-lock-function-name-face ((t (:foreground "#edd400" :bold t :italic t))))
-     (comint-highlight-input ((t (:italic t :bold t))))
+     (font-lock-warning-face ((t (:bold nil :foreground "#f57900"))))
+     (font-lock-function-name-face ((t (:foreground "#edd400" :bold nil :italic t))))
+     (comint-highlight-input ((t (:italic t :bold nil))))
      (comint-highlight-prompt ((t (:foreground "#8ae234"))))
      (isearch ((t (:background "#f57900" :foreground "#2e3436"))))
      (isearch-lazy-highlight-face ((t (:foreground "#2e3436" :background "#e9b96e"))))
      (show-paren-match-face ((t (:foreground "#2e3436" :background "#73d216"))))
      (show-paren-mismatch-face ((t (:background "#ad7fa8" :foreground "#2e3436"))))
-     (minibuffer-prompt ((t (:foreground "#729fcf" :bold t))))
+     (minibuffer-prompt ((t (:foreground "#729fcf" :bold nil))))
      (info-xref ((t (:foreground "#729fcf"))))
      (info-xref-visited ((t (:foreground "#ad7fa8"))))
      )))
@@ -172,6 +166,21 @@
 (require 'diminish)
 (eval-after-load "filladapt" '(diminish 'filladapt-mode))
 (prefer-coding-system 'utf-8-unix)
+(delete-selection-mode t)
+(setq-default truncate-lines t)
+(setq-default truncate-partial-width-windows t)
+(setq enable-recursive-minibuffers t)
+;(resize-minibuffer-mode 1)
+;(follow-mode t)
+(setq scroll-step 1)
+(setq scroll-conservatively 5)
+(setq kill-whole-line t)
+(put 'narrow-to-region 'disabled nil)
+
+;; (require 'auto-show)
+;; (auto-show-mode 1)
+;; (setq-default auto-show-mode t)
+;; (auto-show-make-point-visible)
 
 
 ;; global keybindings
@@ -191,6 +200,8 @@
 (global-set-key "\C-x\C-b" 'ibuffer)
 (global-set-key [(C z)] 'rgrep)
 (global-set-key (kbd "C-<") 'goto-line)
+(global-set-key [C-home] 'beginning-of-buffer)
+(global-set-key [C-end] 'end-of-buffer)
 
 (defun force-exit ()
   "Prevent accidental exit"
@@ -234,11 +245,6 @@
 (defvar common-lisp-hyperspec-symbol-table (concat common-lisp-hyperspec-root "Data/Map_Sym.txt"))
 (defvar hyperspec-prog (concat home-dir "site/ilisp/extra/hyperspec"))
 
-(add-hook 'lisp-mode-hook (lambda ()
-                            (slime-mode)))
-
-
-
 
 ;; elisp
 
@@ -250,9 +256,9 @@
 (setq tramp-default-method "ssh")
 
 
-;; start server
+;; ;; start server
 
-(server-start)
+;; (server-start)
 
 ;; swap windows
 
@@ -278,10 +284,13 @@
 
 ;; js2-mode
 
-;(add-hook 'js2-mode-hook 'my-js2-mode-bindings)
-;(defun my-js2-mode-bindings ())
-;  (define-key js2-mode-map [tab] 'self-insert-command)
-;  (setq tab-width 4))
+(require 'js2-mode)
+;; (add-to-list 'auto-mode-alist '("\\.js$" . js2-mode))
+;; (define-key js2-mode-map [tab] 'self-insert-command)
+(setq js2-consistent-level-indent-inner-bracket-p t)
+;; (defun my-js2-mode-bindings ()
+;;   (setq tab-width 4))
+;; (add-hook 'js2-mode-hook 'my-js2-mode-bindings)
 
 ;; spelling
 
@@ -316,8 +325,7 @@
 (require 'clojure-mode)
 (add-to-list 'auto-mode-alist '("\\.clj\\'" . clojure-mode))
 (add-hook 'clojure-mode-hook
-          (lambda ()
-            (local-set-key [(C t)] 'transpose-sexps)))
+          (lambda () (local-set-key [(C t)] 'transpose-sexps)))
 
 ;; slime
 
@@ -327,23 +335,23 @@
 
 (slime-setup '(slime-scratch slime-editing-commands slime-asdf slime-fuzzy slime-repl))
 
+(defcustom slime-repl-history-size 20000 "Larger REPL history")
+
 (setq slime-net-coding-system 'utf-8-unix)
 (add-to-list 'minor-mode-alist
              '(slime-fuzzy-target-buffer-completions-mode
                " Fuzzy Target Buffer Completions"))
 
-(defun slime-keys ()
-  (local-set-key [f1] '(lambda ()
-                         (interactive)
-                         (info (concatenate 'string "(gcl) " (thing-at-point 'symbol)))))
-  (local-set-key [tab] 'slime-indent-and-complete-symbol)
-  (local-set-key [(C t)] 'transpose-sexps))
-(add-hook 'slime-mode-hook 'slime-keys)
-
-(add-hook 'slime-mode-hook
+(add-hook 'slime-connected-hook
           (lambda ()
+            (slime-mode)
             (setq slime-truncate-lines nil)
             (slime-redirect-inferior-output)))
+
+(add-hook 'lisp-mode-hook
+          (lambda ()
+            (local-set-key [f1] 'clhs-info)
+            (slime-mode)))
 
 (require 'swank-clojure)
 
@@ -366,6 +374,45 @@
 (defslime-start ecl 'ecl)
 (defslime-start sbcl 'sbcl)
 
+(define-key slime-mode-map (kbd "C-t") 'transpose-sexps)
+(define-key slime-mode-map (kbd "C-M-t") 'transpose-chars)
+(define-key slime-mode-map (kbd "C-b") 'backward-sexp)
+(define-key slime-mode-map (kbd "C-M-b") 'backward-char)
+(define-key slime-mode-map (kbd "C-f") 'forward-sexp)
+(define-key slime-mode-map (kbd "C-M-f") 'forward-char)
+
+
+
+
+;; contentswitch
+
+(require 'contentswitch)
+
+
+;; jtags
+
+(require 'jtags)
+
+
+;; whitespace
+
+(autoload 'whitespace-mode "whitespace" "Toggle whitespace visualization." t)
+(setq whitespace-line-column 80)
+(setq whitespace-style '(tabs tab-mark lines-tail))
+(setq whitespace-global-modes '(lisp-mode python-mode clojure-mode js-mode))
+(add-hook 'write-file-hooks 'delete-trailing-whitespace)
+(add-hook 'lisp-mode-hook 'whitespace-mode)
+(add-hook 'python-mode-hook 'whitespace-mode)
+(add-hook 'clojure-mode-hook 'whitespace-mode)
+(add-hook 'js-mode-hook 'whitespace-mode)
+(add-hook 'java-mode-hook 'whitespace-mode)
+(add-hook 'java-mode-hook 'jtags-mode)
+
+
+;; HTML
+
+(load-file (expand-file-name "~/.emacs.d/addons/js-in-html.el"))
+(add-js-in-html-hook)
 
 ;; fw/bw
 
@@ -406,3 +453,25 @@
 (global-set-key [C-backspace] 'bw-kill-word)
 (global-set-key [C-delete] 'fw-kill-word)
 
+
+;; ;; jdee
+
+;; (add-to-list 'load-path (expand-file-name "~/.emacs.d/addons/jdee/lisp"))
+;; (add-to-list 'load-path (expand-file-name "~/.emacs.d/addons/jdee/build/lisp"))
+;; (add-to-list 'load-path (expand-file-name "~/.emacs.d/addons/cedet-1.0/common"))
+;; (load-file (expand-file-name "~/.emacs.d/addons/cedet-1.0/common/cedet.el"))
+;; (add-to-list 'load-path (expand-file-name "~/.emacs.d/addons/elib-1.0/"))
+
+;; (require 'jde)
+;; (custom-set-variables
+;;   ;; custom-set-variables was added by Custom.
+;;   ;; If you edit it by hand, you could mess it up, so be careful.
+;;   ;; Your init file should contain only one such instance.
+;;   ;; If there is more than one, they won't work right.
+;;  '(jde-jdk-registry (quote (("1.6" . "/usr/lib/jvm/java-6-sun")))))
+;; (custom-set-faces
+;;   ;; custom-set-faces was added by Custom.
+;;   ;; If you edit it by hand, you could mess it up, so be careful.
+;;   ;; Your init file should contain only one such instance.
+;;   ;; If there is more than one, they won't work right.
+;;  )
